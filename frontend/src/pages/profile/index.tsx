@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAtom } from 'jotai'
-import { Box, Page, Text, Header, Button, Avatar, List } from 'zmp-ui'
+import { Box, Page, Text, Header, Button, Avatar } from 'zmp-ui'
 import { khachHangAtom } from '@/store/authState'
 import api from '@/services/api'
 

@@ -6,6 +6,7 @@ import { useSetAtom } from 'jotai'
 import { Box, Button, Page, Text, Header } from 'zmp-ui'
 import { khachHangAtom, tokenAtom } from '@/store/authState'
 import api from '@/services/api'
+import axios from 'axios'
 
 function HomePage() {
     const navigate = useNavigate()
@@ -26,14 +27,14 @@ function HomePage() {
 
             // Bước 2
             const accessToken = await getAccessToken({})
-            alert('Đã lấy được Token Zalo, đang gửi về Backend...');
+            alert("URL API đang gọi: " + api.defaults.baseURL)
             console.log("accessToken:", accessToken);
             // Bước 3: Gửi về Backend
-            const res: any = await api.post('/auth/zalo', { accessToken })
-
+            //const res: any = await api.post('/auth/zalo', { accessToken })
+            const res: any = await axios.post('https://hotel-booking-backend.onrender.com/api/auth/zalo', { accessToken })
             // Bước 4: Thành công
             alert('Đăng nhập Backend thành công!');
-            localStorage.setItem('token', res.data.token)
+            localStorage.setItem('token', res.token)
             setToken(res.data.token)
             setKhachHang(res.data.khachHang)
             navigate('/rooms')
