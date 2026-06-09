@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { authorize } from 'zmp-sdk'
+// Import thêm getAccessToken từ zmp-sdk
+import { authorize, getAccessToken } from 'zmp-sdk'
 import { useSetAtom } from 'jotai'
 import { Box, Button, Page, Text, Header } from 'zmp-ui'
 import { khachHangAtom, tokenAtom } from '@/store/authState'
@@ -18,10 +19,12 @@ function HomePage() {
 
     const handleDangNhap = async () => {
         try {
-            const { accessToken } = await authorize({
-                scopes: ['profile', 'phone']
+            await authorize({
+                scopes: ['scope.userInfo', 'scope.userPhonenumber']
             })
+            const accessToken = await getAccessToken({})
             const res: any = await api.post('/auth/zalo', { accessToken })
+
             localStorage.setItem('token', res.data.token)
             setToken(res.data.token)
             setKhachHang(res.data.khachHang)
