@@ -27,7 +27,7 @@ function HomePage() {
             // Bước 2
             const accessToken = await getAccessToken({})
             alert('Đã lấy được Token Zalo, đang gửi về Backend...');
-
+            console.log("accessToken:", accessToken);
             // Bước 3: Gửi về Backend
             const res: any = await api.post('/auth/zalo', { accessToken })
 
