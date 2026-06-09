@@ -19,18 +19,26 @@ function HomePage() {
 
     const handleDangNhap = async () => {
         try {
+            // Bước 1
             await authorize({
                 scopes: ['scope.userInfo', 'scope.userPhonenumber']
             })
+
+            // Bước 2
             const accessToken = await getAccessToken({})
+            alert('Đã lấy được Token Zalo, đang gửi về Backend...');
+
+            // Bước 3: Gửi về Backend
             const res: any = await api.post('/auth/zalo', { accessToken })
 
+            // Bước 4: Thành công
+            alert('Đăng nhập Backend thành công!');
             localStorage.setItem('token', res.data.token)
             setToken(res.data.token)
             setKhachHang(res.data.khachHang)
             navigate('/rooms')
-        } catch (err) {
-            console.error('Dang nhap that bai', err)
+        } catch (err: any) {
+            alert('Lỗi Đăng nhập: ' + (err.message || JSON.stringify(err)))
         }
     }
 
