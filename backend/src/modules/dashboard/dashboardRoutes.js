@@ -1,7 +1,7 @@
 import { Router } from 'express'
-import { dangNhapAdmin, layDanhSachBooking, capNhatTrangThaiBooking, layThongKe } from '../controllers/adminController.js'
-import auth from '../middlewares/auth.js'
-import isAdmin from '../middlewares/isAdmin.js'
+import { dangNhapAdmin, layDanhSachBooking, capNhatTrangThaiBooking, layThongKe } from './dashboardController.js'
+import auth from '../../middlewares/auth.js'
+import isAdmin from '../../middlewares/isAdmin.js'
 
 const router = Router()
 router.post('/login', dangNhapAdmin)

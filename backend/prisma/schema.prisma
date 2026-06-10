@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -17,9 +16,10 @@ enum TrangThaiKhachHang {
   BI_KHOA
 }
 
-enum VaiTroAdmin {
-  SUPER_ADMIN
+enum VaiTroNhanVien {
   ADMIN
+  QUAN_LY
+  LE_TAN
 }
 
 enum TrangThaiPhong {
@@ -65,7 +65,6 @@ enum LoaiGiamGia {
   SO_TIEN
 }
 
-// Bỏ ZALO_ZNS, chỉ còn EMAIL và TRONG_APP
 enum KenhThongBao {
   EMAIL
   TRONG_APP
@@ -79,51 +78,43 @@ enum TrangThaiThongBao {
 
 // ============================================================
 // KHACH_HANG
-// Đăng nhập qua Zalo — chỉ lấy được tên, avatar, SĐT
-// Email nullable: tự điền từ lần đặt phòng trước
 // ============================================================
 
 model KhachHang {
-  id            Int                  @id @default(autoincrement())
-  zaloId        String               @unique @map("zalo_id")
-  hoTen         String               @map("ho_ten")
-  soDienThoai   String?              @map("so_dien_thoai")
-  email         String?              // nullable — lưu lại từ lần đặt phòng trước
-  anhDaiDien    String?              @map("anh_dai_dien")
-  trangThai     TrangThaiKhachHang   @default(HOAT_DONG) @map("trang_thai")
-  ngayTao       DateTime             @default(now()) @map("ngay_tao")
-  ngayCapNhat   DateTime             @updatedAt @map("ngay_cap_nhat")
+  id            Int                @id @default(autoincrement())
+  zaloId        String             @unique @map("zalo_id")
+  hoTen         String             @map("ho_ten")
+  soDienThoai   String             @map("so_dien_thoai") // Đã bỏ optional để đồng bộ với e-KYC/PowerDesigner
+  email         String?            // Nullable - tự động lưu lại từ lần đặt phòng trước
+  anhDaiDien    String             @map("anh_dai_dien")  // Đã bỏ optional
+  trangThaiKhachHang     TrangThaiKhachHang @default(HOAT_DONG) @map("trang_thai")
+  ngayTao       DateTime           @default(now()) @map("ngay_tao")
+  ngayCapNhat   DateTime           @updatedAt @map("ngay_cap_nhat")
 
-  datPhong  DatPhong[]
-  danhGia   DanhGia[]
-  yeuThich  YeuThich[]
-  thongBao  ThongBao[]
+  datPhong      DatPhong[]
+  danhGia       DanhGia[]
+  yeuThich      YeuThich[]
+  thongBao      ThongBao[]
 
   @@map("khach_hang")
 }
 
-// ============================================================
-// QUAN_TRI_VIEN
-// Đăng nhập bằng email + mật khẩu riêng, không qua Zalo
-// ============================================================
-
-model QuanTriVien {
-  id          Int         @id @default(autoincrement())
-  hoTen       String      @map("ho_ten")
-  email       String      @unique
-  matKhau     String      @map("mat_khau")
-  vaiTro      VaiTroAdmin @default(ADMIN) @map("vai_tro")
-  ngayTao     DateTime    @default(now()) @map("ngay_tao")
-  ngayCapNhat DateTime    @updatedAt @map("ngay_cap_nhat")
+model NhanVien {
+  id          Int            @id @default(autoincrement())
+  hoTen       String         @map("ho_ten")
+  email       String         @unique
+  matKhau     String         @map("mat_khau")
+  vaiTro      VaiTroNhanVien @default(LE_TAN) @map("vai_tro")
+  ngayTao     DateTime       @default(now()) @map("ngay_tao")
+  ngayCapNhat DateTime       @updatedAt @map("ngay_cap_nhat")
 
   nhatKy NhatKy[]
 
-  @@map("quan_tri_vien")
+  @@map("nhan_vien")
 }
 
 // ============================================================
 // LOAI_PHONG
-// Phân loại phòng: Superior, Deluxe, Suite...
 // ============================================================
 
 model LoaiPhong {
@@ -131,7 +122,7 @@ model LoaiPhong {
   tenLoai  String  @map("ten_loai")
   sucChua  Int     @map("suc_chua")
   dienTich Decimal @map("dien_tich") @db.Decimal(8, 2)
-  moTa     String? @db.Text
+  moTa     String @db.Text
 
   phong         Phong[]
   khuyenMaiLoai KhuyenMaiLoaiPhong[]
@@ -141,7 +132,6 @@ model LoaiPhong {
 
 // ============================================================
 // PHONG
-// Thông tin phòng cụ thể, liên kết với loại phòng
 // ============================================================
 
 model Phong {
@@ -155,29 +145,28 @@ model Phong {
   ngayTao     DateTime       @default(now()) @map("ngay_tao")
   ngayCapNhat DateTime       @updatedAt @map("ngay_cap_nhat")
 
-  loaiPhong     LoaiPhong       @relation(fields: [maLoai], references: [id])
-  anhPhong      AnhPhong[]
-  phongTienNghi PhongTienNghi[]
-  bangGia       BangGia[]
-  datPhong      DatPhong[]
-  danhGia       DanhGia[]
-  yeuThich      YeuThich[]
+  loaiPhong       LoaiPhong         @relation(fields: [maLoai], references: [id])
+  anhPhong        AnhPhong[]
+  phongTienNghi   PhongTienNghi[]
+  bangGia         BangGia[]
+  chiTietDatPhong ChiTietDatPhong[]
+  danhGia         DanhGia[]
+  yeuThich        YeuThich[]
 
   @@map("phong")
 }
 
 // ============================================================
 // ANH_PHONG
-// Ảnh của từng phòng, có đánh số thứ tự hiển thị
 // ============================================================
 
 model AnhPhong {
-  id         Int      @id @default(autoincrement())
-  maPhong    Int      @map("ma_phong")
-  duongDan   String   @map("duong_dan")
-  laAnhChinh Boolean  @default(false) @map("la_anh_chinh")
-  thuTu      Int      @default(0) @map("thu_tu")
-  ngayTao    DateTime @default(now()) @map("ngay_tao")
+  id          Int      @id @default(autoincrement())
+  maPhong     Int      @map("ma_phong")
+  duongDan    String   @map("duong_dan")
+  laAnhChinh  Boolean  @default(false) @map("la_anh_chinh")
+  thuTu       Int      @default(0) @map("thu_tu")
+  ngayTao     DateTime @default(now()) @map("ngay_tao")
 
   phong Phong @relation(fields: [maPhong], references: [id], onDelete: Cascade)
 
@@ -186,7 +175,6 @@ model AnhPhong {
 
 // ============================================================
 // TIEN_NGHI
-// Danh mục tiện nghi dùng chung: WiFi, Điều hòa, Bể bơi...
 // ============================================================
 
 model TienNghi {
@@ -202,7 +190,6 @@ model TienNghi {
 
 // ============================================================
 // PHONG_TIEN_NGHI
-// Bảng trung gian nhiều-nhiều: Phòng <-> Tiện nghi
 // ============================================================
 
 model PhongTienNghi {
@@ -218,7 +205,6 @@ model PhongTienNghi {
 
 // ============================================================
 // BANG_GIA
-// Bảng giá theo mùa / ngày lễ, ghi đè gia_co_ban của phòng
 // ============================================================
 
 model BangGia {
@@ -236,7 +222,6 @@ model BangGia {
 
 // ============================================================
 // DICH_VU
-// Dịch vụ bổ sung: Bữa sáng, Đưa đón sân bay, Spa...
 // ============================================================
 
 model DichVu {
@@ -255,7 +240,6 @@ model DichVu {
 
 // ============================================================
 // KHUYEN_MAI
-// Mã giảm giá với đầy đủ điều kiện áp dụng
 // ============================================================
 
 model KhuyenMai {
@@ -279,7 +263,6 @@ model KhuyenMai {
 
 // ============================================================
 // KHUYEN_MAI_LOAI_PHONG
-// Giới hạn mã khuyến mãi chỉ áp dụng cho một số loại phòng
 // ============================================================
 
 model KhuyenMaiLoaiPhong {
@@ -294,47 +277,61 @@ model KhuyenMaiLoaiPhong {
 }
 
 // ============================================================
-// DAT_PHONG
-// Trung tâm của hệ thống — mỗi booking là 1 bản ghi
-// emailNhanThongBao: bắt buộc nhập tại bước xác nhận đặt phòng
+// DAT_PHONG (Booking Header)
 // ============================================================
 
 model DatPhong {
-  id                 Int               @id @default(autoincrement())
-  maBooking          String            @unique @default(cuid()) @map("ma_booking")
-  maKhach            Int               @map("ma_khach")
-  maPhong            Int               @map("ma_phong")
-  maKhuyenMai        Int?              @map("ma_khuyen_mai")
-  emailNhanThongBao  String            @map("email_nhan_thong_bao") // bắt buộc nhập
-  ngayCheckin        DateTime          @map("ngay_checkin") @db.Date
-  ngayCheckout       DateTime          @map("ngay_checkout") @db.Date
-  soNguoiLon         Int               @default(1) @map("so_nguoi_lon")
-  soTreEm            Int               @default(0) @map("so_tre_em")
-  tongTienPhong      Decimal           @map("tong_tien_phong") @db.Decimal(12, 2)
-  tongTienDichVu     Decimal           @default(0) @map("tong_tien_dich_vu") @db.Decimal(12, 2)
-  soTienGiam         Decimal           @default(0) @map("so_tien_giam") @db.Decimal(12, 2)
-  tongThanhToan      Decimal           @map("tong_thanh_toan") @db.Decimal(12, 2)
-  yeuCau             String?           @db.Text @map("yeu_cau")
-  trangThai          TrangThaiDatPhong @default(CHO_THANH_TOAN) @map("trang_thai")
-  thoiGianDat        DateTime          @default(now()) @map("thoi_gian_dat")
-  ngayCapNhat        DateTime          @updatedAt @map("ngay_cap_nhat")
+  id                Int               @id @default(autoincrement())
+  maBooking         String            @unique @default(cuid()) @map("ma_booking")
+  maKhach           Int               @map("ma_khach")
+  maKhuyenMai       Int?              @map("ma_khuyen_mai")
+  emailNhanThongBao String            @map("email_nhan_thong_bao")
+  tenNguoiLuuTru    String?           @map("ten_nguoi_luu_tru")
+  sdtNguoiLuuTru    String?           @map("sdt_nguoi_luu_tru")
+  ngayCheckin       DateTime          @map("ngay_checkin") @db.Date
+  ngayCheckout      DateTime          @map("ngay_checkout") @db.Date
+  soNguoiLon        Int               @default(1) @map("so_nguoi_lon")
+  soTreEm           Int               @default(0) @map("so_tre_em")
+  tongTienPhong     Decimal           @map("tong_tien_phong") @db.Decimal(12, 2)
+  tongTienDichVu    Decimal           @default(0) @map("tong_tien_dich_vu") @db.Decimal(12, 2)
+  soTienGiam        Decimal           @default(0) @map("so_tien_giam") @db.Decimal(12, 2)
+  tongThanhToan     Decimal           @map("tong_thanh_toan") @db.Decimal(12, 2)
+  yeuCau            String?           @db.Text @map("yeu_cau")
+  trangThai         TrangThaiDatPhong @default(CHO_THANH_TOAN) @map("trang_thai")
+  thoiGianDat       DateTime          @default(now()) @map("thoi_gian_dat")
+  ngayCapNhat       DateTime          @updatedAt @map("ngay_cap_nhat")
 
-  khachHang      KhachHang        @relation(fields: [maKhach], references: [id])
-  phong          Phong            @relation(fields: [maPhong], references: [id])
-  khuyenMai      KhuyenMai?       @relation(fields: [maKhuyenMai], references: [id])
-  datPhongDichVu DatPhongDichVu[]
-  thanhToan      ThanhToan[]
-  hoanTien       HoanTien[]
-  danhGia        DanhGia[]
-  thongBao       ThongBao[]
+  khachHang       KhachHang         @relation(fields: [maKhach], references: [id])
+  khuyenMai       KhuyenMai?        @relation(fields: [maKhuyenMai], references: [id])
+  chiTietDatPhong ChiTietDatPhong[]
+  datPhongDichVu  DatPhongDichVu[]
+  thanhToan       ThanhToan[]
+  hoanTien        HoanTien[]
+  danhGia         DanhGia[]
+  thongBao        ThongBao[]
 
   @@map("dat_phong")
 }
 
 // ============================================================
+// CHI_TIET_DAT_PHONG (Booking Detail)
+// ============================================================
+
+model ChiTietDatPhong {
+  id         Int      @id @default(autoincrement())
+  maDatPhong Int      @map("ma_dat_phong")
+  maPhong    Int      @map("ma_phong")
+  giaLucDat  Decimal  @map("gia_luc_dat") @db.Decimal(12, 2)
+  ngayTao    DateTime @default(now()) @map("ngay_tao")
+
+  datPhong DatPhong @relation(fields: [maDatPhong], references: [id], onDelete: Cascade)
+  phong    Phong    @relation(fields: [maPhong], references: [id])
+
+  @@map("chi_tiet_dat_phong")
+}
+
+// ============================================================
 // DAT_PHONG_DICH_VU
-// Dịch vụ bổ sung đã chọn trong booking
-// Lưu don_gia_luc_dat để tránh ảnh hưởng khi admin sửa giá sau
 // ============================================================
 
 model DatPhongDichVu {
@@ -352,13 +349,14 @@ model DatPhongDichVu {
 
 // ============================================================
 // THANH_TOAN
-// Giao dịch thanh toán: ZaloPay, MoMo hoặc tiền mặt
 // ============================================================
 
 model ThanhToan {
   id             Int                 @id @default(autoincrement())
   maDatPhong     Int                 @map("ma_dat_phong")
   maGiaoDich     String?             @unique @map("ma_giao_dich")
+  appTransId     String?             @unique @map("app_trans_id")
+  zaloTransId    String?             @unique @map("zalo_trans_id")
   phuongThuc     PhuongThucThanhToan @map("phuong_thuc")
   soTien         Decimal             @map("so_tien") @db.Decimal(12, 2)
   trangThai      TrangThaiThanhToan  @default(DANG_XU_LY) @map("trang_thai")
@@ -374,18 +372,17 @@ model ThanhToan {
 
 // ============================================================
 // HOAN_TIEN
-// Hoàn tiền khi hủy phòng theo chính sách
 // ============================================================
 
 model HoanTien {
-  id            Int               @id @default(autoincrement())
-  maDatPhong    Int               @map("ma_dat_phong")
-  maThanhToan   Int               @map("ma_thanh_toan")
-  soTienHoan    Decimal           @map("so_tien_hoan") @db.Decimal(12, 2)
-  lyDo          String?           @map("ly_do")
-  trangThai     TrangThaiHoanTien @default(CHO_XU_LY) @map("trang_thai")
+  id           Int               @id @default(autoincrement())
+  maDatPhong   Int               @map("ma_dat_phong")
+  maThanhToan  Int               @map("ma_thanh_toan")
+  soTienHoan   Decimal           @map("so_tien_hoan") @db.Decimal(12, 2)
+  lyDo         String?           @map("ly_do")
+  trangThai    TrangThaiHoanTien @default(CHO_XU_LY) @map("trang_thai")
   thoiGianXuLy DateTime?         @map("thoi_gian_xu_ly")
-  ngayTao       DateTime          @default(now()) @map("ngay_tao")
+  ngayTao      DateTime          @default(now()) @map("ngay_tao")
 
   datPhong  DatPhong  @relation(fields: [maDatPhong], references: [id])
   thanhToan ThanhToan @relation(fields: [maThanhToan], references: [id])
@@ -395,15 +392,13 @@ model HoanTien {
 
 // ============================================================
 // DANH_GIA
-// Đánh giá sau lưu trú — chỉ khách đã hoàn thành booking mới gửi được
-// Dùng @unique trên maDatPhong để mỗi booking chỉ có 1 đánh giá
 // ============================================================
 
 model DanhGia {
   id           Int      @id @default(autoincrement())
   maDatPhong   Int      @unique @map("ma_dat_phong")
   maKhach      Int      @map("ma_khach")
-  maPhong      Int      @map("ma_phong")
+  maPhong      Int?     @map("ma_phong")
   diemTong     Int      @map("diem_tong")
   diemVeSinh   Int?     @map("diem_ve_sinh")
   diemDichVu   Int?     @map("diem_dich_vu")
@@ -413,9 +408,9 @@ model DanhGia {
   ngayDang     DateTime @default(now()) @map("ngay_dang")
   ngayCapNhat  DateTime @updatedAt @map("ngay_cap_nhat")
 
-  datPhong   DatPhong    @relation(fields: [maDatPhong], references: [id])
-  khachHang  KhachHang   @relation(fields: [maKhach], references: [id])
-  phong      Phong       @relation(fields: [maPhong], references: [id])
+  datPhong   DatPhong     @relation(fields: [maDatPhong], references: [id])
+  khachHang  KhachHang    @relation(fields: [maKhach], references: [id])
+  phong      Phong?       @relation(fields: [maPhong], references: [id])
   anhDanhGia AnhDanhGia[]
 
   @@map("danh_gia")
@@ -423,7 +418,6 @@ model DanhGia {
 
 // ============================================================
 // ANH_DANH_GIA
-// Ảnh thực tế đính kèm trong đánh giá của khách
 // ============================================================
 
 model AnhDanhGia {
@@ -439,7 +433,6 @@ model AnhDanhGia {
 
 // ============================================================
 // YEU_THICH
-// Danh sách phòng yêu thích của khách hàng
 // ============================================================
 
 model YeuThich {
@@ -456,8 +449,6 @@ model YeuThich {
 
 // ============================================================
 // THONG_BAO
-// Lịch sử thông báo gửi qua Email hoặc hiển thị trong app
-// Bỏ ZALO_ZNS — thay bằng EMAIL + TRONG_APP
 // ============================================================
 
 model ThongBao {
@@ -477,13 +468,12 @@ model ThongBao {
 }
 
 // ============================================================
-// NHAT_KY
-// Audit log — ghi lại mọi thao tác của Admin để truy vết
+// NHAT_KY (Audit Log)
 // ============================================================
 
 model NhatKy {
   id           Int      @id @default(autoincrement())
-  maAdmin      Int      @map("ma_admin")
+  maNhanVien   Int      @map("ma_nhan_vien") // Đổi từ maAdmin sang maNhanVien
   hanhDong     String   @map("hanh_dong")
   bangLienQuan String   @map("bang_lien_quan")
   banGhiId     Int?     @map("ban_ghi_id")
@@ -492,7 +482,7 @@ model NhatKy {
   diaChiIp     String?  @map("dia_chi_ip")
   thoiGian     DateTime @default(now()) @map("thoi_gian")
 
-  quanTriVien QuanTriVien @relation(fields: [maAdmin], references: [id])
+  nhanVien     NhanVien @relation(fields: [maNhanVien], references: [id])
 
   @@map("nhat_ky")
 }

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { layDanhSachPhong, layChiTietPhong } from '../controllers/roomController.js'
+import { layDanhSachPhong, layChiTietPhong } from './roomController.js'
 
 const router = Router()
 router.get('/', layDanhSachPhong)
