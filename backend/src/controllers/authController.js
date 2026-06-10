@@ -10,6 +10,7 @@ export const dangNhapZalo = async (req, res) => {
         if (!accessToken) return error(res, 'Thieu access token', 400)
 
         const zaloUser = await layThongTinNguoiDung(accessToken)
+        console.log("Dữ liệu Zalo trả về thực tế:", zaloUser);
         if (!zaloUser?.id) return error(res, 'Token Zalo khong hop le', 401)
 
         let khachHang = await prisma.khachHang.findUnique({ where: { zaloId: zaloUser.id } })
